@@ -1,0 +1,24 @@
+<head>
+  <title>shorturl</title>
+</head>
+<body>
+  {{if .HasError}}
+  <div class="error_message">{{.ErrorMessage}}</div>
+  {{end}}
+
+  {{if .HasResult}}
+  <div class="result_message">
+    <a href="{{.BaseURL}}/{{.ShortURL}}">{{.BaseURL}}/{{.ShortURL}}</a>
+  </div>
+  {{end}}
+
+  {{if .HasForm}}
+  <div class="input_form">
+    <form action="" method="POST" role="form">
+      <label for="longurl">long URL</label>
+      <input type="text" id="longurl" name="longurl" placeholder="type the URL to be shortened" />
+      <button type="submit">shorten</button>
+    </form>
+  </div>
+  {{end}}
+</body>
