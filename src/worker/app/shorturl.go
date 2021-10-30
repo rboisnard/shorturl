@@ -2,11 +2,30 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/go-redis/redis/v8"
 )
+
+type AppConfig struct {
+	appURL    string
+	appPort   string
+	redisURL  string
+	redisPort string
+}
+
+// default values
+var appConfig = AppConfig{
+	appURL:    "localhost",
+	appPort:   "5500",
+	redisURL:  "localhost",
+	redisPort: "6379",
+}
 
 type HomeData struct {
 	HasError     bool
@@ -18,10 +37,19 @@ type HomeData struct {
 }
 
 func main() {
-	applicationPort := applicationPort()
+	setAppConfig()
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     appConfig.redisURL + ":" + appConfig.redisPort,
+		Password: "",
+		DB:       0,
+	})
+
+	pong, err := redisClient.Ping(context.TODO()).Result()
+	fmt.Println(pong, err)
 
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(applicationPort, nil))
+	log.Fatal(http.ListenAndServe(":"+appConfig.appPort, nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +129,7 @@ func homePOST(w http.ResponseWriter, r *http.Request) {
 		HasError:     false,
 		HasResult:    true,
 		HasForm:      false,
-		BaseURL:      "http://localhost:5500",
+		BaseURL:      "http://" + appConfig.appURL + ":" + appConfig.appPort,
 		ShortURL:     shorturl,
 		ErrorMessage: "",
 	}
@@ -111,7 +139,7 @@ func homePOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func shorturlGET(w http.ResponseWriter, r *http.Request, shorturl string) {
-	log.Printf("request GET '/%s' from %s with %s", shorturl, r.RemoteAddr, r.Body)
+	log.Printf("request GET '/%s' from %s", shorturl, r.RemoteAddr)
 
 	// TODO: fetch and validate the shorturl
 	// tmp: mock shorturl result
@@ -146,6 +174,10 @@ func render(w http.ResponseWriter, r *http.Request, data HomeData) {
 	}
 
 	err = home.Execute(w, data)
+	if err != nil {
+		internalServerError(w, r, "error while rendering home.html")
+		return
+	}
 }
 
 func internalServerError(w http.ResponseWriter, r *http.Request, reason string) {
@@ -155,11 +187,24 @@ func internalServerError(w http.ResponseWriter, r *http.Request, reason string) 
 	http.Error(w, "unexpected behavior", http.StatusInternalServerError)
 }
 
-func applicationPort() string {
-	port, envPortFound := os.LookupEnv("PORT")
-	if !envPortFound {
-		// default value
-		return ":5500"
+func setAppConfig() {
+	appURL, found := os.LookupEnv("APP_URL")
+	if found {
+		appConfig.appURL = appURL
 	}
-	return ":" + port
+
+	appPort, found := os.LookupEnv("APP_PORT")
+	if found {
+		appConfig.appPort = appPort
+	}
+
+	redisURL, found := os.LookupEnv("REDIS_URL")
+	if found {
+		appConfig.redisURL = redisURL
+	}
+
+	redisPort, found := os.LookupEnv("REDIS_PORT")
+	if found {
+		appConfig.redisPort = redisPort
+	}
 }

@@ -1,6 +1,6 @@
 ARG base_image=alpine:3.14
 
-FROM ${base_image}
+FROM ${base_image} as dev
 
 RUN  apk update \
   && apk add    \
@@ -10,14 +10,18 @@ RUN  apk update \
 
 COPY app/ /build
 
-RUN  cd /build                  \
-  && go build shorturl.go       \
-  && mkdir -p /app              \
-  && cp /build/shorturl /app/   \
-  && cp /build/home.html /app/  \
-  && rm -rf /build
+RUN  cd /build  \
+  && go get github.com/go-redis/redis/v8
 
-COPY entrypoint.sh /
+FROM dev as builder
+
+RUN  cd /build  \
+  && go build shorturl.go
+
+FROM dev
+
+COPY --from=builder ["/build/shorturl", "/build/home.html", "/app/"]
+COPY ["entrypoint.sh", "/"]
 
 WORKDIR /app
 ENTRYPOINT ["/entrypoint.sh"]
