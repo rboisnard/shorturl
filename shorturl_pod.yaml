@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: shorturl-pod
+  name: shorturl-pod
+spec:
+  containers:
+  - name: redis
+    image: raspi01:5000/shorturl/redis:staging
+    env:
+    - name: REDIS_PORT
+      value: "6379"
+
+  - name: worker
+    image: raspi01:5000/shorturl/worker:staging
+    env:
+    - name: APP_PORT
+      value: "5500"
+    - name: REDIS_PORT
+      value: "6379"
+    ports:
+    - containerPort: 5500
+      hostPort: 8080
+      protocol: TCP
+
+  restartPolicy: Always
