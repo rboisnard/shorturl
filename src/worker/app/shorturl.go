@@ -14,16 +14,18 @@ import (
 
 type AppConfig struct {
 	appURL    string
+	appIP     string
 	appPort   string
-	redisURL  string
+	redisIP   string
 	redisPort string
 }
 
 // default values
 var appConfig = AppConfig{
-	appURL:    "localhost",
+	appURL:    "localhost:8080",
+	appIP:     "localhost",
 	appPort:   "5500",
-	redisURL:  "localhost",
+	redisIP:   "localhost",
 	redisPort: "6379",
 }
 
@@ -40,7 +42,7 @@ func main() {
 	setAppConfig()
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     appConfig.redisURL + ":" + appConfig.redisPort,
+		Addr:     appConfig.redisIP + ":" + appConfig.redisPort,
 		Password: "",
 		DB:       0,
 	})
@@ -129,7 +131,7 @@ func homePOST(w http.ResponseWriter, r *http.Request) {
 		HasError:     false,
 		HasResult:    true,
 		HasForm:      false,
-		BaseURL:      "http://" + appConfig.appURL + ":" + appConfig.appPort,
+		BaseURL:      "http://" + appConfig.appURL,
 		ShortURL:     shorturl,
 		ErrorMessage: "",
 	}
@@ -193,14 +195,19 @@ func setAppConfig() {
 		appConfig.appURL = appURL
 	}
 
+	appIP, found := os.LookupEnv("APP_IP")
+	if found {
+		appConfig.appIP = appIP
+	}
+
 	appPort, found := os.LookupEnv("APP_PORT")
 	if found {
 		appConfig.appPort = appPort
 	}
 
-	redisURL, found := os.LookupEnv("REDIS_URL")
+	redisIP, found := os.LookupEnv("REDIS_IP")
 	if found {
-		appConfig.redisURL = redisURL
+		appConfig.redisIP = redisIP
 	}
 
 	redisPort, found := os.LookupEnv("REDIS_PORT")

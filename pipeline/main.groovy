@@ -1,27 +1,51 @@
 def call() {
   def build = load "pipeline/build.groovy"
   def test = load "pipeline/test.groovy"
+  def publish = load "pipeline/publish.groovy"
+  def manifest = load "pipeline/manifest.groovy"
 
-  def image_nodes = [:]
+  def actions = [:]
   stash name: "repo"
 
-  image_nodes["x86"] = {
-    node("x86_slave") {
-      unstash "repo"
-      build()
-      test()
+  archs = [
+    "x86": ["node": "x86_slave", "arch": "amd64"]//,
+    /*
+     * Weird issue with Jenkins remoting, shell steps end up
+     * randomly in java.lang.InterruptedException.
+     * Possibly because of durable-task plugin.
+     *
+     * java.lang.InterruptedException
+     * at java.base/java.lang.Object.wait(Native Method)
+     * at hudson.remoting.Request.call(Request.java:177)
+     * at hudson.remoting.Channel.call(Channel.java:1000)
+     * at hudson.Launcher$RemoteLauncher.launch(Launcher.java:1122)
+     * at hudson.Launcher$ProcStarter.start(Launcher.java:507)
+     * at org.jenkinsci.plugins.durabletask.BourneShellScript.launchWithCookie(BourneShellScript.java:176)
+     * ...
+     *
+     * Temporarily deactivating arm build.
+     */
+    //"arm": ["node": "arm_slave", "arch": "arm64"]
+  ]
+
+  archs.each{ arch, config ->
+    actions[arch] = {
+      node(config.node) {
+        unstash "repo"
+        build()
+        test()
+        publish(config.arch)
+      }
     }
   }
 
-  image_nodes["arm"] = {
-    node("arm_slave") {
-      unstash "repo"
-      build()
-      test()
-    }
-  }
+  parallel(actions)
 
-  parallel(image_nodes)
+  node("x86_slave") {
+    // TODO: different tags depending on pull-request, normal branch, release branch ...
+    // same as in publish()
+    manifest("staging")
+  }
 }
 
 return this
