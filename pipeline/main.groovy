@@ -13,18 +13,18 @@ def call() {
         unstash "repo"
 
         stage("build") {
-          sh "tools/build.sh ${BRANCH_NAME}"
+          sh "pipeline/build.sh ${BRANCH_NAME}"
         }
 
         stage("test") {
-          sh "tools/test.sh ${BRANCH_NAME}"
+          sh "pipeline/test.sh ${BRANCH_NAME}"
         }
 
         stage("publish") {
           // TODO: different tags depending on pull-request, normal branch, release branch ...
           String tag = "staging"
 
-          sh "tools/publish.sh ${BRANCH_NAME} ${tag} ${config.arch} raspi01:5000"
+          sh "pipeline/publish.sh ${BRANCH_NAME} ${tag} ${config.arch} raspi01:5000"
         }
       }
     }
@@ -33,13 +33,15 @@ def call() {
   parallel(actions)
 
   node("x86_slave") {
-    unstash "repo"
+    stage("manifest") {
+      unstash "repo"
 
-    // TODO: different tags depending on pull-request, normal branch, release branch ...
-    // same as in stage "publish"
-    String tag = "staging"
+      // TODO: different tags depending on pull-request, normal branch, release branch ...
+      // same as in stage "publish"
+      String tag = "staging"
 
-    sh "pipeline/manifest.sh ${tag} raspi01:5000 amd64,arm64"
+      sh "pipeline/manifest.sh ${tag} raspi01:5000 amd64,arm64"
+    }
   }
 }
 
