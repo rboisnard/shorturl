@@ -11,11 +11,12 @@ origin_tag="local"
 runcheck() {
   if [ $# -lt 2 ]; then
     echo "missing arguments in macro runcheck"
+    echo "(in: runcheck $@)"
     exit 1
   fi
   error_message="$1"
   shift
-  echo "run: '$@'"
+  echo "++run: $@"
   eval "$@"
   if [ $? -ne 0 ]; then
     echo "${error_message}"
@@ -23,11 +24,11 @@ runcheck() {
   fi
 }
 
+### main
+
 if [ $# -gt 0 ]; then
   origin_tag="$1"
 fi
-
-### main
 
 # Executor nodes run inside containers using docker.
 # They share access to the docker daemon on their host
