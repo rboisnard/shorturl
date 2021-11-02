@@ -1,9 +1,4 @@
 def call() {
-  def build = load "pipeline/build.groovy"
-  def test = load "pipeline/test.groovy"
-  def publish = load "pipeline/publish.groovy"
-  def manifest = load "pipeline/manifest.groovy"
-
   def actions = [:]
   stash name: "repo"
 
@@ -16,9 +11,21 @@ def call() {
     actions[arch] = {
       node(config.node) {
         unstash "repo"
-        build()
-        test()
-        publish(config.arch)
+
+        stage("build") {
+          sh "pipeline/build.sh ${BRANCH_NAME}"
+        }
+
+        stage("test") {
+          sh "pipeline/test.sh ${BRANCH_NAME}"
+        }
+
+        stage("publish") {
+          // TODO: different tags depending on pull-request, normal branch, release branch ...
+          String tag = "staging"
+
+          sh "pipeline/publish.sh ${BRANCH_NAME} ${tag} ${config.arch} raspi01:5000"
+        }
       }
     }
   }
@@ -26,9 +33,15 @@ def call() {
   parallel(actions)
 
   node("x86_slave") {
-    // TODO: different tags depending on pull-request, normal branch, release branch ...
-    // same as in publish()
-    manifest("staging")
+    stage("manifest") {
+      unstash "repo"
+
+      // TODO: different tags depending on pull-request, normal branch, release branch ...
+      // same as in stage "publish"
+      String tag = "staging"
+
+      sh "pipeline/manifest.sh ${tag} raspi01:5000 amd64,arm64"
+    }
   }
 }
 

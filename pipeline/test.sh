@@ -11,12 +11,13 @@ origin_tag="local"
 runcheck() {
   if [ $# -lt 2 ]; then
     echo "missing arguments in macro runcheck"
+    echo "(in: runcheck $@)"
     cleanup_containers bypass
     exit 1
   fi
   error_message="$1"
   shift
-  echo "run: '$@'"
+  echo "++run: $@"
   eval "$@"
   if [ $? -ne 0 ]; then
     echo "${error_message}"
@@ -29,7 +30,7 @@ runcheck() {
 # usage:
 # runshow command with options
 runshow() {
-  echo "run: '$@'"
+  echo "++run: $@"
   eval "$@"
 }
 
@@ -101,10 +102,6 @@ runcheck "cannot start worker container"  \
   -e REDIS_PORT=6379                      \
   --name=shorturl_worker_${suffix}        \
   shorturl/worker:${origin_tag}
-
-# get worker container logs
-runcheck "cannot get worker container logs" \
-  docker logs shorturl_worker_${suffix} > shorturl_worker_${suffix}.log
 
 # check worker container logs
 runcheck "worker container cannot access redis container" \

@@ -27,11 +27,12 @@ esac
 runcheck() {
   if [ $# -lt 2 ]; then
     echo "missing arguments in macro runcheck"
+    echo "(in: runcheck $@)"
     exit 1
   fi
   error_message="$1"
   shift
-  echo "run: '$@'"
+  echo "++run: $@"
   eval "$@"
   if [ $? -ne 0 ]; then
     echo "${error_message}"
