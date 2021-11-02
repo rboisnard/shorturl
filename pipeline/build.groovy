@@ -8,13 +8,9 @@ def call() {
      * local registry.
      */
     sh """
-      docker build -t raspi01:5000/shorturl/redis:staging -f src/redis/Dockerfile src/redis/
-      docker build -t raspi01:5000/shorturl/worker:staging -f src/worker/Dockerfile src/worker/
-      #docker build -t raspi01:5000/shorturl/server:staging -f src/server/Dockerfile src/server/
-
-      docker push raspi01:5000/shorturl/redis:staging
-      docker push raspi01:5000/shorturl/worker:staging
-      #docker push raspi01:5000/shorturl/server:staging
+      docker build -t shorturl/redis:${BRANCH_NAME} -f src/redis/Dockerfile src/redis/
+      docker build -t shorturl/worker:${BRANCH_NAME} -f src/worker/Dockerfile src/worker/
+      #docker build -t shorturl/server:${BRANCH_NAME} -f src/server/Dockerfile src/server/
     """
   }
 }

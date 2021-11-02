@@ -7,14 +7,18 @@ metadata:
 spec:
   containers:
   - name: redis
-    image: raspi01:5000/shorturl/redis:staging
+    image: shorturl/redis:local
     env:
     - name: REDIS_PORT
       value: "6379"
+    - name: BIND_IP
+      value: "0"
 
   - name: worker
-    image: raspi01:5000/shorturl/worker:staging
+    image: shorturl/worker:local
     env:
+    - name: APP_URL
+      value: "localhost:8080"
     - name: APP_PORT
       value: "5500"
     - name: REDIS_PORT
