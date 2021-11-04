@@ -12,10 +12,9 @@ import (
 func main() {
 	app.Config.SetAppConfig()
 
-	var db app.ShortDB
-	db.Init()
+	app.DBInstance.Init()
 
-	pong, err := db.Ping()
+	pong, err := app.DBInstance.Ping()
 	fmt.Println(pong, err)
 
 	http.HandleFunc("/", web.UIHandler)
