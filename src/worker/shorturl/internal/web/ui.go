@@ -26,13 +26,13 @@ func UIHandler(w http.ResponseWriter, r *http.Request) {
 
 	} else if len(r.URL.Path) > 1 {
 
-		// requested path contains a shorturl
-		shorturl := r.URL.Path[1:]
+		// requested path contains a short URL
+		surl := r.URL.Path[1:]
 
 		if r.Method == "GET" {
-			shorturlGET(w, r, shorturl)
+			shorturlGET(w, r, surl)
 		} else {
-			weberr.InternalServerError(w, r, "unexpected method '"+r.Method+"' for '/"+shorturl+"'")
+			weberr.InternalServerError(w, r, "unexpected method '"+r.Method+"' for '/"+surl+"'")
 		}
 		return
 
@@ -59,11 +59,10 @@ func homeGET(w http.ResponseWriter, r *http.Request) {
 }
 
 func homePOST(w http.ResponseWriter, r *http.Request) {
-	log.Printf("request POST '/' from %s with '%s'", r.RemoteAddr, r.FormValue("longurl"))
+	lurl := r.FormValue("longurl")
+	log.Printf("request POST '/' from %s with '%s'", r.RemoteAddr, lurl)
 
-	// TODO: fetch/store the shortened url
-	// tmp: mock shorturl result
-	shorturl, err := "mock_url", error(nil)
+	surl, err := app.DBInstance.StoreLongURL(lurl)
 
 	if err != nil {
 		// error with the input long URL
@@ -73,34 +72,32 @@ func homePOST(w http.ResponseWriter, r *http.Request) {
 			HasForm:      true,
 			BaseURL:      "",
 			ShortURL:     "",
-			ErrorMessage: "the input long URL resulted in error",
+			ErrorMessage: "cannot store the short URL",
 		}
 		data.Render(w, r)
 
-		log.Printf("response to POST '/' from %s - bad long URL", r.RemoteAddr)
+		log.Printf("response to POST '/' from %s - short URL not stored", r.RemoteAddr)
 		return
 	}
 
-	// no error, reply with the shortened URL
+	// no error, reply with the short URL
 	data := pages.HomeData{
 		HasError:     false,
 		HasResult:    true,
 		HasForm:      false,
 		BaseURL:      "http://" + app.Config.AppURL,
-		ShortURL:     shorturl,
+		ShortURL:     surl,
 		ErrorMessage: "",
 	}
 	data.Render(w, r)
 
-	log.Printf("response to POST '/' from %s - shorturl '%s'", r.RemoteAddr, shorturl)
+	log.Printf("response to POST '/' from %s - created short URL '%s'", r.RemoteAddr, surl)
 }
 
-func shorturlGET(w http.ResponseWriter, r *http.Request, shorturl string) {
-	log.Printf("request GET '/%s' from %s", shorturl, r.RemoteAddr)
+func shorturlGET(w http.ResponseWriter, r *http.Request, surl string) {
+	log.Printf("request GET '/%s' from %s", surl, r.RemoteAddr)
 
-	// TODO: fetch and validate the shorturl
-	// tmp: mock shorturl result
-	longurl, err := "http://www.google.com", error(nil)
+	lurl, err := app.DBInstance.GetLongURL(surl)
 
 	if err != nil {
 		// error with the input long URL
@@ -114,11 +111,11 @@ func shorturlGET(w http.ResponseWriter, r *http.Request, shorturl string) {
 		}
 		data.Render(w, r)
 
-		log.Printf("response to GET '/%s' from %s - bad short URL", shorturl, r.RemoteAddr)
+		log.Printf("response to GET '/%s' from %s - bad short URL", surl, r.RemoteAddr)
 		return
 	}
 
 	// no error, simply redirect
-	log.Printf("response to GET '/%s' from %s - redirect to '%s'", shorturl, r.RemoteAddr, longurl)
-	http.Redirect(w, r, longurl, http.StatusFound)
+	log.Printf("response to GET '/%s' from %s - redirect to '%s'", surl, r.RemoteAddr, lurl)
+	http.Redirect(w, r, lurl, http.StatusFound)
 }
