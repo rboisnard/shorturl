@@ -110,7 +110,7 @@ runcheck "worker container cannot access redis container" \
 # TODO: test multiple requests
 # test mock url (temporary)
 runcheck "curl request is not getting the expected reply" \
-  "curl -X POST ${host_ip}:8080 2> /dev/null | grep \"http://${host_ip}:8080/mock_url\""
+  "curl -X POST ${host_ip}:8080 -d \"longurl=http://golang.org\" 2> /dev/null | grep \"http://${host_ip}:8080/vj88pz\""
 
 echo "all tests ok"
 cleanup_containers
