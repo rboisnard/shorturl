@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	app.Config.SetAppConfig()
+	app.Config.FromEnv()
 
 	app.DBInstance.Init()
 

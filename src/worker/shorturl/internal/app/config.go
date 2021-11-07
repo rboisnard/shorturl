@@ -19,7 +19,7 @@ var Config = AppConfig{
 	RedisPort: "6379",
 }
 
-func (config AppConfig) SetAppConfig() {
+func (config *AppConfig) FromEnv() {
 	AppURL, found := os.LookupEnv("APP_URL")
 	if found {
 		config.AppURL = AppURL
