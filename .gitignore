@@ -1,2 +1,2 @@
-src/worker/app/go.sum
-src/worker/app/shorturl
+src/worker/shorturl/go.sum
+src/worker/shorturl/shorturl

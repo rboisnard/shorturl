@@ -8,7 +8,7 @@ RUN  apk update \
     less        \
     go
 
-COPY app/ /build
+COPY shorturl/ /build
 
 RUN  cd /build  \
   && go get github.com/go-redis/redis/v8
@@ -16,12 +16,13 @@ RUN  cd /build  \
 FROM dev as builder
 
 RUN  cd /build  \
-  && go build shorturl.go
+  && go build cmd/shorturl.go
 
 FROM dev
 
 COPY --from=builder ["/build/shorturl", "/build/home.html", "/app/"]
 COPY ["entrypoint.sh", "/"]
+RUN rm -rf /build
 
 WORKDIR /app
 ENTRYPOINT ["/entrypoint.sh"]
